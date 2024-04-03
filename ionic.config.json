@@ -1,0 +1,7 @@
+{
+  "name": "Termometro",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "angular"
+}
