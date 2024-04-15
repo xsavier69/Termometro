@@ -1,5 +1,6 @@
 import { Component } from '@angular/core';
 import { Database, object, ref } from '@angular/fire/database';
+import { LocalNotifications } from '@capacitor/local-notifications';
 
 @Component({
   selector: 'app-home',
@@ -13,8 +14,7 @@ export class HomePage {
 
   constructor(private database: Database) {}
 
-  updateThermometer() {
-    // Limitar el valor de grados entre 0 y 100
+  async updateThermometer() {
     const limitedGrados = Math.max(0, Math.min(this.grados, 100));
 
     if (limitedGrados <= 20) {
@@ -26,14 +26,27 @@ export class HomePage {
     }
 
     this.barHeight = limitedGrados;
+
+    if (this.grados > 40) {
+      await LocalNotifications.schedule({
+        notifications: [
+          {
+            title: "¡Alerta de temperatura!",
+            body: "La temperatura ha superado los 40 grados.",
+            id: 1
+          }
+        ]
+      });
+    }
   }
 
-  ngOnInit() {
-    // Suscripción a la ruta "/grados" en la base de datos para obtener el valor numérico
+  async ngOnInit() {
     const routeGrados = ref(this.database, '/grados');
     object(routeGrados).subscribe((snapshot: any) => {
-      this.grados = snapshot.snapshot.val() ?? 0; // Acceder a los datos a través de snapshot.snapshot.val()
+      this.grados = snapshot.snapshot.val() ?? 0; 
       this.updateThermometer();
     });
+
+    await LocalNotifications.requestPermissions();//solicitar permisos de la app
   }
 }
