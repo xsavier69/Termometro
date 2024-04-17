@@ -11,42 +11,71 @@ export class HomePage {
   barHeight: number = 0;
   barColor: string = 'blue';
   grados: number = 0;
+  previousState: string = 'normal';
 
   constructor(private database: Database) {}
 
   async updateThermometer() {
     const limitedGrados = Math.max(0, Math.min(this.grados, 100));
-
-    if (limitedGrados <= 20) {
-      this.barColor = 'blue';
+    if (limitedGrados <= 35) {
+      this.barColor = 'black';
+      this.sendNotification('night');
     } else if (limitedGrados >= 80) {
-      this.barColor = 'red';
+      this.barColor = 'cyan';
+      this.sendNotification('sunny');
     } else {
-      this.barColor = 'green';
+      this.barColor = 'orange';
+      this.sendNotification('afternoon');
     }
-
     this.barHeight = limitedGrados;
+  }
 
-    if (this.grados > 40) {
-      await LocalNotifications.schedule({
-        notifications: [
-          {
-            title: "¡Alerta de temperatura!",
-            body: "La temperatura ha superado los 40 grados.",
-            id: 1
-          }
-        ]
-      });
+  async sendNotification(state: string) {
+    if (state !== this.previousState) {
+      if (state === 'night') {
+        await LocalNotifications.schedule({
+          notifications: [
+            {
+              title: "¡Es de noche!",
+              body: "Alistate para tener una linda noche.",
+              id: 2,
+            },
+          ],
+        });
+      } else if (state === 'sunny') {
+        await LocalNotifications.schedule({
+          notifications: [
+            {
+              title: "¡Está soleado!",
+              body: "Aprovecha del hermoso sol.",
+              id: 1,
+            },
+          ],
+        });
+      } else {
+        await LocalNotifications.schedule({
+          notifications: [
+            {
+              title: "¡Tarde!",
+              body: "Disfruta de esta tarde soleada.",
+              id: 3,
+            },
+          ],
+        });
+      }
+      this.previousState = state;
     }
   }
 
   async ngOnInit() {
     const routeGrados = ref(this.database, '/grados');
     object(routeGrados).subscribe((snapshot: any) => {
-      this.grados = snapshot.snapshot.val() ?? 0; 
-      this.updateThermometer();
+      const newGrados = snapshot.snapshot.val() ?? 0;
+      if (newGrados !== this.grados) {
+        this.grados = newGrados;
+        this.updateThermometer();
+      }
     });
-
-    await LocalNotifications.requestPermissions();//solicitar permisos de la app
+    await LocalNotifications.requestPermissions(); // Solicitar permisos de la app
   }
 }
