@@ -17,7 +17,7 @@ export class HomePage {
 
   async updateThermometer() {
     const limitedGrados = Math.max(0, Math.min(this.grados, 100));
-    if (limitedGrados <= 35) {
+    if (limitedGrados <= 36) {
       this.barColor = 'black';
       this.sendNotification('night');
     } else if (limitedGrados >= 80) {
